@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1946 - Operation Highjump</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <style>
+        /* Basis Styling - Identiek aan Belgica voor uniformiteit */
+        body {
+            background-color: rgb(211, 224, 242); 
+            margin: 0;
+            padding: 0;
+            overflow-y: auto; 
+            height: auto;
+        }
+
+        /* De Header Foto */
+        .bleed-header {
+            width: 100%;
+            height: 50vh; 
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bleed-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            display: block;
+        }
+
+        /* De Content Container */
+        .content-container {
+            max-width: 1100px; 
+            margin: 0 auto;
+            padding: 60px 40px;
+            background-color: transparent;
+        }
+
+        .titel-sectie {
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: 40px;
+            margin-bottom: 40px;
+        }
+
+        .titel-sectie h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 64px;
+            color: rgb(119, 102, 116);
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+        }
+
+        .titel-sectie .subtitel {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: #8e8d8a;
+            font-weight: 600;
+        }
+
+        /* Twee kolommen grid voor Carrousel + Tekst */
+        .verhaal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 50px; 
+            align-items: start;
+            margin-bottom: 60px;
+        }
+
+        .beschrijving {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        /* Carrousel Styling */
+        .carousel-box {
+            position: relative;
+            width: 100%;
+            height: 380px; 
+            background: #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .carousel-slides {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out; 
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide.active {
+            opacity: 1; 
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: 0.2s;
+            z-index: 10;
+        }
+
+        .carousel-btn:hover {
+            background: #ffffff;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .btn-prev { left: 15px; }
+        .btn-next { right: 15px; }
+
+        /* Bemanning / Kopstukken Sectie */
+        .sectie-titel {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 36px;
+            color: rgb(119, 102, 116);
+            margin-top: 60px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(119, 102, 116, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .bemanning-lijst {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+
+        .bemanand-lid {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .crew-foto {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            background-color: #ccc;
+        }
+
+        .crew-info {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .crew-info h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            color: rgb(119, 102, 116);
+        }
+
+        .crew-functie {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #777;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .crew-biografie {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+        }
+
+        /* Kaart & Explore Layout */
+        .kaart-sectie-wrapper {
+            display: grid;
+            grid-template-columns: 320px 1fr; 
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .explore-sidebar {
+            background-color: rgb(119, 102, 116); 
+            color: white;
+            padding: 40px 25px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .explore-sidebar h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .explore-sidebar p {
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.9;
+            margin-bottom: 35px;
+        }
+
+        .explore-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .explore-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .explore-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .explore-number {
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            color: rgb(119, 102, 116);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .explore-text h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .explore-text span {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Rechterkant: De Leaflet Kaart */
+        #map {
+            width: 100%;
+            height: 550px; 
+            background-color: #f4f3f0;
+        }
+
+        .custom-pin {
+            background-color: rgb(119, 102, 116);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 26px; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .leaflet-popup-content-wrapper {
+            font-family: 'Inter', sans-serif;
+            border-radius: 6px;
+            padding: 5px;
+        }
+        
+        .leaflet-popup-content h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            margin: 0 0 5px 0;
+            color: rgb(119, 102, 116);
+        }
+
+        .leaflet-popup-content p {
+            margin: 0;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        /* Tijdlijn Styling */
+        .tijdlijn-container {
+            margin-top: 50px;
+            background-color: rgb(119, 102, 116);
+            padding: 30px 40px 40px 40px;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+        }
+
+        .tijdlijn-titel {
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .tijdlijn-balk {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-top: 15px;
+        }
+
+        .tijdlijn-balk::before {
+            content: '';
+            position: absolute;
+            top: 22px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.4);
+            z-index: 1;
+        }
+
+        .tijdlijn-punt {
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+        }
+
+        .tijdlijn-bol {
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border: 4px solid rgb(119, 102, 116);
+            border-radius: 50%;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .tijdlijn-jaar {
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .tijdlijn-punt:hover .tijdlijn-bol {
+            transform: scale(1.3);
+            background-color: rgb(211, 224, 242);
+        }
+
+        /* Terug Knop */
+        .terug-knop {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 100;
+            background: rgba(255,255,255,0.9);
+            padding: 12px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+
+        .terug-knop:hover {
+            transform: scale(1.05);
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="terug-knop">← ARCHIEF OVERZICHT</a>
+
+    <header class="bleed-header">
+        <img src="images/1.webp" alt="Vliegdekschip USS Philippine Sea tijdens Highjump">
+    </header>
+
+    <main class="content-container">
+        <section class="titel-sectie">
+            <span class="subtitel">Logboek: December 1946</span>
+            <h1>Operation Highjump</h1>
+        </section>
+
+        <div class="verhaal-grid">
+            <div class="carousel-box">
+                <button class="carousel-btn btn-prev" onclick="changeSlide(-1)">❮</button>
+                <button class="carousel-btn btn-next" onclick="changeSlide(1)">❯</button>
+                
+                <div class="carousel-slides">
+                    <img src="images/hj1.jpg" class="slide active" alt="Militair vliegtuig op Antarctica">
+                    <img src="images/hj27.jpg" class="slide" alt="Onderzeeër USS Sennet in het ijs">
+                    <img src="images/hj50.jpg" class="slide" alt="Tentenbasis op Little America">
+                    <img src="images/hj59.jpg" class="slide" alt="Groepsfoto van Amerikaanse militairen">
+                </div>
+            </div>
+
+            <section class="beschrijving">
+                <p>
+                    In december 1946 lanceerde de Amerikaanse marine de grootste expeditie naar Antarctica ooit: <strong>Operation Highjump</strong>. Onder de officiële vlag van wetenschappelijk onderzoek stuurde de VS een enorme oorlogsvloot naar het ijscontinent.
+                </p>
+                <p>
+                    Met 13 schepen, waaronder een vliegdekschip en een onderzeeër, en 4.700 manschappen was het doel om militaire bases te testen in extreme kou en het continent grootschalig in kaart te brengen. De operatie omhulde zich al snel in mysterie en complottheorieën vanwege de enorme militaire overmacht en het abrupte einde.
+                </p>
+            </section>
+        </div>
+
+        <h3 class="sectie-titel">Sleutelfiguren van de Operatie</h3>
+        <div class="bemanning-lijst">
+            
+            <div class="bemanand-lid">
+                <img src="images/Richard_E._Byrd_cph.3b17378.jpg" alt="Richard E. Byrd" class="crew-foto">
+                <div class="crew-info">
+                    <h4>Admiraal Richard E. Byrd</h4>
+                    <span class="crew-functie">Operationeel Leider & Poolreiziger</span>
+                    <p class="crew-biografie">
+                        Byrd was destijds Amerika's beroemdste poolreiziger. Als veteraan leidde hij de vluchten over de Zuidpool. Zijn strategische inzichten en ervaring waren cruciaal voor het coördineren van de gigantische luchtfotografie-operaties boven het onbekende ijs.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bemanand-lid">
+                <img src="images/images.jpg" alt="Richard Cruzen" class="crew-foto">
+                <div class="crew-info">
+                    <h4>Schout-bij-nacht Richard Cruzen</h4>
+                    <span class="crew-functie">Commandant van de Vloot</span>
+                    <p class="crew-biografie">
+                        Waar Byrd verantwoordelijk was voor het vliegen en de wetenschap, had Cruzen de absolute militaire leiding over de vloot (Task Force 68). Hij navigeerde de vliegdekschepen, ijsbrekers en de onderzeeër door de gevaarlijke ijsschotsen van de Rosszee.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bemanand-lid">
+                <img src="images/James_Forrestal_-_SecOfDef_(cropped).jpg" alt="James Forrestal" class="crew-foto">
+                <div class="crew-info">
+                    <h4>James Forrestal</h4>
+                    <span class="crew-functie">Minister van de Marine (Initiatiefnemer)</span>
+                    <p class="crew-biografie">
+                        Als Amerikaanse Minister van de Marine keurde Forrestal deze geheime, grootschalige operatie goed. Zijn doel was geopolitiek: het claimen van invloed op Antarctica vlak na de Tweede Wereldoorlog, met het oog op de naderende Koude Oorlog.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <h3 style="font-family: 'Cormorant Garamond'; font-size: 32px; margin-bottom: 20px;">Ontdek de Operatie</h3>
+        <div class="kaart-sectie-wrapper">
+            
+            <aside class="explore-sidebar">
+                <h2>Explore</h2>
+                <p>Klik op de locaties hieronder of op de kaart om de strategische punten van deze gigantische militaire expeditie te bekijken.</p>
+                
+                <ul class="explore-list">
+                    <li class="explore-item" onclick="focusOnMarker(0)">
+                        <div class="explore-number">1</div>
+                        <div class="explore-text">
+                            <h3>De Uitvalsbasis</h3>
+                            <span>Dec 1946 — Norfolk & San Diego</span>
+                        </div>
+                    </li>
+                    <li class="explore-item" onclick="focusOnMarker(1)">
+                        <div class="explore-number">2</div>
+                        <div class="explore-text">
+                            <h3>Little America IV</h3>
+                            <span>Jan 1947 — Ross-ijsplaat</span>
+                        </div>
+                    </li>
+                    <li class="explore-item" onclick="focusOnMarker(2)">
+                        <div class="explore-number">3</div>
+                        <div class="explore-text">
+                            <h3>Bungers Oase</h3>
+                            <span>Feb 1947 — Warme Meren ontdekt</span>
+                        </div>
+                    </li>
+                </ul>
+            </aside>
+
+            <div id="map"></div>
+        </div>
+
+
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        /* --- CAROUSEL LOGICA --- */
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+
+        function changeSlide(direction) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + direction + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        /* --- INTERACTIEVE KAART LOGICA (LEAFLET) --- */
+        // We centreren de kaart nu direct dieper op het zuidelijk halfrond / Antarctica
+        const map = L.map('map').setView([-50.0, -110.0], 2);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        // De militaire vaar- en vliegroutes van Task Force 68 richting Antarctica
+        const routePoints = [
+            [36.8508, -76.2859],   // 1. Norfolk (Oostkust VS - startpunt vloot)
+            [-9.6700, -80.0100],   // Door het Panamakanaal
+            [-43.5321, 172.6362],  // Tussenstop in Nieuw-Zeeland (Christchurch)
+            [-78.5000, -164.0000], // 2. Ross-ijsplaat (Little America IV)
+            [-66.3000, 100.9500]   // 3. Bunger Hills / Bungers Oase
+        ];
+
+        const routeLine = L.polyline(routePoints, {
+            color: 'rgb(119, 102, 116)', 
+            weight: 3,
+            dashArray: '6, 8', 
+            opacity: 0.85
+        }).addTo(map);
+
+        const markerStorage = [];
+
+        const markerData = [
+            {
+                coords: [36.8508, -76.2859],
+                title: 'December 1946 - De Vloot Vertrekt',
+                desc: 'Task Force 68 vertrekt in alle geheimhouding vanuit marinebases in Norfolk en San Diego met 13 zware marineschepen en duizenden manschappen.'
+            },
+            {
+                coords: [-78.5000, -164.0000],
+                title: 'Januari 1947 - Little America IV',
+                desc: 'De Amerikanen bouwen een enorme basis op het ijs, inclusief een landingsbaan voor zware transportvliegtuigen. Vanaf hier starten geheime verkenningsvluchten over de pool.'
+            },
+            {
+                coords: [-66.3000, 100.9500],
+                title: 'Februari 1947 - Bungers Oase',
+                desc: 'Piloot David Bunger ontdekt plotseling een ijsvrij gebied met vloeibare, warme, groenblauwe meren te midden van de ijsvlakte. Een sensationele ontdekking.'
+            }
+        ];
+
+        markerData.forEach((data, index) => {
+            const pinNumber = index + 1;
+            
+            const customIcon = L.divIcon({
+                className: 'custom-pin',
+                html: pinNumber,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            const marker = L.marker(data.coords, { icon: customIcon }).addTo(map);
+            
+            marker.bindPopup(`
+                <h4>${data.title}</h4>
+                <p>${data.desc}</p>
+            `);
+
+            markerStorage.push(marker);
+        });
+
+        function focusOnMarker(index) {
+            const targetMarker = markerStorage[index];
+            const targetCoords = markerData[index].coords;
+            
+            map.setView(targetCoords, 4, { // Iets minder ver ingezoomd omdat Antarctica-punten wijd verspreid liggen
+                animate: true,
+                duration: 1.2
+            });
+            
+            setTimeout(() => {
+                targetMarker.openPopup();
+            }, 600);
+        }
+    </script>
+</body>
+</html>

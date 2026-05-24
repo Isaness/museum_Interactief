@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2009 - Prinses Elisabeth Station Antarctica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght=600&family=Inter:wght=400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <style>
+        /* Basis Styling - Aangepast aan de moderne, strakke stijl van het PE-station */
+        body {
+            background-color: rgb(210, 222, 229); 
+            margin: 0;
+            padding: 0;
+            overflow-y: auto; 
+            height: auto;
+        }
+
+        /* De Header Foto */
+        .bleed-header {
+            width: 100%;
+            height: 50vh; 
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bleed-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            display: block;
+        }
+
+        /* De Content Container */
+        .content-container {
+            max-width: 1100px; 
+            margin: 0 auto;
+            padding: 60px 40px;
+            background-color: transparent;
+        }
+
+        .titel-sectie {
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: 40px;
+            margin-bottom: 40px;
+        }
+
+        .titel-sectie h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 64px;
+            color: rgb(44, 74, 91);
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+        }
+
+        .titel-sectie .subtitel {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: #61737d;
+            font-weight: 600;
+        }
+
+        /* Twee kolommen grid voor Carrousel + Tekst */
+        .verhaal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 50px; 
+            align-items: start;
+            margin-bottom: 60px;
+        }
+
+        .beschrijving {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #2b2b2b;
+        }
+
+        /* Carrousel Styling */
+        .carousel-box {
+            position: relative;
+            width: 100%;
+            height: 380px; 
+            background: #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .carousel-slides {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out; 
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide.active {
+            opacity: 1; 
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: 0.2s;
+            z-index: 10;
+        }
+
+        .carousel-btn:hover {
+            background: #ffffff;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .btn-prev { left: 15px; }
+        .btn-next { right: 15px; }
+
+        /* Bemanning / Kopstukken Sectie */
+        .sectie-titel {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 36px;
+            color: rgb(44, 74, 91);
+            margin-top: 60px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(44, 74, 91, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .bemanning-lijst {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+
+        .bemanand-lid {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .crew-foto {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            background-color: #ccc;
+        }
+
+        .crew-info {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .crew-info h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            color: rgb(44, 74, 91);
+        }
+
+        .crew-functie {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #556670;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .crew-biografie {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+        }
+
+        /* Kaart & Explore Layout */
+        .kaart-sectie-wrapper {
+            display: grid;
+            grid-template-columns: 320px 1fr; 
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .explore-sidebar {
+            background-color: rgb(44, 74, 91); 
+            color: white;
+            padding: 40px 25px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .explore-sidebar h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .explore-sidebar p {
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.9;
+            margin-bottom: 35px;
+        }
+
+        .explore-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .explore-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .explore-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .explore-number {
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            color: rgb(44, 74, 91);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .explore-text h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .explore-text span {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Rechterkant: De Leaflet Kaart */
+        #map {
+            width: 100%;
+            height: 550px; 
+            background-color: #f4f3f0;
+        }
+
+        .custom-pin {
+            background-color: rgb(44, 74, 91);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 26px; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .leaflet-popup-content-wrapper {
+            font-family: 'Inter', sans-serif;
+            border-radius: 6px;
+            padding: 5px;
+        }
+        
+        .leaflet-popup-content h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            margin: 0 0 5px 0;
+            color: rgb(44, 74, 91);
+        }
+
+        .leaflet-popup-content p {
+            margin: 0;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        /* Terug Knop */
+        .terug-knop {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 100;
+            background: rgba(255,255,255,0.9);
+            padding: 12px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+
+        .terug-knop:hover {
+            transform: scale(1.05);
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="terug-knop">← ARCHIEF OVERZICHT</a>
+
+    <header class="bleed-header">
+        <img src="images/princess.png" alt="Het aerodynamische Prinses Elisabeth Station in Antarctica">
+    </header>
+
+    <main class="content-container">
+        <section class="titel-sectie">
+            <span class="subtitel">Inwijding: Februari 2009</span>
+            <h1>Prinses Elisabeth Station</h1>
+        </section>
+
+        <div class="verhaal-grid">
+            <div class="carousel-box">
+                <button class="carousel-btn btn-prev" onclick="changeSlide(-1)">❮</button>
+                <button class="carousel-btn btn-next" onclick="changeSlide(1)">❯</button>
+                
+                <div class="carousel-slides">
+                    <img src="images/Station_princesse_Élisabeth_02.JPG" class="slide active" alt="Prinses Elisabeth Station exterieur op Utsteinen">
+                    <img src="images/Station_princesse_Élisabeth_03.JPG" class="slide" alt="Zonnepanelen en windturbines bij het station">
+                </div>
+            </div>
+
+            <section class="beschrijving">
+                <p>
+                    In februari 2009 opende België een revolutionair nieuw hoofdstuk in het poolonderzoek met de ingebruikname van het <strong>Prinses Elisabeth Station</strong>. Gelegen op de Utsteinen-nunatak in Koningin Maudland, is dit het allereerste 'zero emission'-station op Antarctica.
+                </p>
+                <p>
+                    Het futuristische, aerodynamische station draait volledig op hernieuwbare energie via een complex microgrid van windturbines en zonnepanelen. Het station is ontworpen om extreme poolstormen te weerstaan en huisvest elke Zuidpoolzomer internationale teams van wetenschappers die cruciaal onderzoek doen naar klimaatverandering, glaciologie en microbiologie.
+                </p>
+            </section>
+        </div>
+
+        <h3 class="sectie-titel">Sleutelfiguren van het Project</h3>
+        <div class="bemanning-lijst">
+            
+            <div class="bemanand-lid">
+                <img src="images/alain_hubert.jpg" alt="Alain Hubert" class="crew-foto">
+                <div class="crew-info">
+                    <h4>Alain Hubert</h4>
+                    <span class="crew-functie">Expeditieleider & Oprichter International Polar Foundation</span>
+                    <p class="crew-biografie">
+                        Als ervaren poolreiziger en bergbeklimmer was Alain Hubert de visionaire bouwheer achter het project. Onder de vlag van de International Polar Foundation (IPF) leidde hij het ontwerp, de logistieke huzarenring van de transporten over het ijs, en de daadwerkelijke constructie van het station onder extreme omstandigheden.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bemanand-lid">
+                <img src="images/johan_berte.jpg" alt="Johan Berte" class="crew-foto">
+                <div class="crew-info">
+                    <h4>Johan Berte</h4>
+                    <span class="crew-functie">Hoofdingenieur & Projectmanager</span>
+                    <p class="crew-biografie">
+                        Berte leidde de technische ontwikkeling en het architecturale ontwerp van het station. Het unieke concept – een gelaagde, passieve isolatiestructuur die verankerd is in de rotsen en de wind perfect geleidt – werd onder zijn toezicht ontworpen om de ecologische voetafdruk tot exact nul te reduceren.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bemanand-lid">
+                <img src="images/belspo_wetenschappers.jpg" alt="BELSPO Onderzoekers" class="crew-foto">
+                <div class="crew-info">
+                    <h4>Internationale Wetenschappers (BELSPO)</h4>
+                    <span class="crew-functie">Klimatologisch & Atmosferisch Onderzoek</span>
+                    <p class="crew-biografie">
+                        Gesteund door het Belgisch Wetenschapsbeleid (BELSPO) trekken elk seizoen tientallen biologen, geologen en glaciologen naar het station. Dankzij de unieke locatie tussen de oceaan en het Antarctische plateau brengen zij de impact van globale opwarming nauwkeurig in kaart.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <h3 style="font-family: 'Cormorant Garamond'; font-size: 32px; margin-bottom: 20px;">Ontdek de Operatie</h3>
+        <div class="kaart-sectie-wrapper">
+            
+            <aside class="explore-sidebar">
+                <h2>Explore</h2>
+                <p>Klik op de locaties hieronder of op de kaart om de strategische logistieke punten van dit moderne poolstation te bekijken.</p>
+                
+                <ul class="explore-list">
+                    <li class="explore-item" onclick="focusOnMarker(0)">
+                        <div class="explore-number">1</div>
+                        <div class="explore-text">
+                            <h3>Aankomst Crown Bay</h3>
+                            <span>Logistiek Knooppunt aan de Kust</span>
+                        </div>
+                    </li>
+                    <li class="explore-item" onclick="focusOnMarker(1)">
+                        <div class="explore-number">2</div>
+                        <div class="explore-text">
+                            <h3>De Utsteinen Ridge</h3>
+                            <span>Locatie van het Station</span>
+                        </div>
+                    </li>
+                    <li class="explore-item" onclick="focusOnMarker(2)">
+                        <div class="explore-number">3</div>
+                        <div class="explore-text">
+                            <h3>Sør Rondane Bergen</h3>
+                            <span>Het Wetenschappelijke Veldgebied</span>
+                        </div>
+                    </li>
+                </ul>
+            </aside>
+
+            <div id="map"></div>
+        </div>
+
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        /* --- CAROUSEL LOGICA --- */
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+
+        function changeSlide(direction) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + direction + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        /* --- INTERACTIEVE KAART LOGICA (LEAFLET) --- */
+        // We richten de kaart direct op de regio van het Prinses Elisabeth Station in Antarctica
+        const map = L.map('map').setView([-71.95, 23.35], 4);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        // De logistieke route vanaf de ijsplaat (kust) naar het station in het binnenland
+        const routePoints = [
+            [-70.0000, 24.1667],   // 1. Crown Bay (Lossingskade voor schepen)
+            [-71.9499, 23.3475],   // 2. Utsteinen Nunatak (Prinses Elisabeth Station)
+            [-72.2500, 24.0000]    // 3. Sør Rondane Gebergte (Veldwerklocatie)
+        ];
+
+        const routeLine = L.polyline(routePoints, {
+            color: 'rgb(44, 74, 91)', 
+            weight: 3,
+            dashArray: '6, 8', 
+            opacity: 0.85
+        }).addTo(map);
+
+        const markerStorage = [];
+
+        const markerData = [
+            {
+                coords: [-70.0000, 24.1667],
+                title: '1. Crown Bay (De Ijsplaat)',
+                desc: 'Dit is de losplaats aan de ijsrand. Hier meeren de poolvoorradingsschepen aan om zware rupsvoertuigen, bouwmaterialen en brandstof af te zetten voor de 200 km lange tocht landinwaarts.'
+            },
+            {
+                coords: [-71.9499, 23.3475],
+                title: '2. Het Prinses Elisabeth Station',
+                desc: 'Gelegen op 1400 meter hoogte op een granieten rotskam (Utsteinen). Het station is volledig verankerd in de rotsen en functioneert autonoom op wind- en zonne-energie.'
+            },
+            {
+                coords: [-72.2500, 24.0000],
+                title: '3. Sør Rondane Bergen',
+                desc: 'Het majestueuze gebergte achter het station. Dit gebied fungeert als een gigantisch openluchtlaboratorium voor seismologie, meteorologie en het bestuderen van unieke micro-organismen in de ijvrije valleien.'
+            }
+        ];
+
+        markerData.forEach((data, index) => {
+            const pinNumber = index + 1;
+            
+            const customIcon = L.divIcon({
+                className: 'custom-pin',
+                html: pinNumber,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            const marker = L.marker(data.coords, { icon: customIcon }).addTo(map);
+            
+            marker.bindPopup(`
+                <h4>${data.title}</h4>
+                <p>${data.desc}</p>
+            `);
+
+            markerStorage.push(marker);
+        });
+
+        function focusOnMarker(index) {
+            const targetMarker = markerStorage[index];
+            const targetCoords = markerData[index].coords;
+            
+            map.setView(targetCoords, index === 1 ? 7 : 6, { 
+                animate: true,
+                duration: 1.2
+            });
+            
+            setTimeout(() => {
+                targetMarker.openPopup();
+            }, 600);
+        }
+    </script>
+</body>
+</html>
+
+```
