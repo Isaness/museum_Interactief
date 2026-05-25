@@ -192,3 +192,9 @@ body {
     font-size: 1rem;           /* Iets subtieler lettertype voor de jaartallen */
     color: #ffffff; 
 }
+
+#mapAntarctica {
+            width: 100%;
+            height: 550px; 
+            background-color: #f4f3f0;
+        }
